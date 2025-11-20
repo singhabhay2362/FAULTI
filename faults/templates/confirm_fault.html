@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Confirm Fault</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+  <div class="confirm-container">
+    <h2>Confirm Fault</h2>
+    <img src="{{ fault.image.url }}" alt="Fault Image" class="confirm-img">
+    <form method="POST">
+      {% csrf_token %}
+      <label>Enter Fault Name:</label><br>
+      <input type="text" name="fault_name" placeholder="e.g., Crack on Track" required><br><br>
+      <button type="submit" class="btn confirm">Submit</button>
+      <a href="{% url 'faults:dashboard' %}" class="btn cancel">Cancel</a>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link rel="stylesheet" href="{% static 'style3.css' %}">
+</head>
+<body>
+    <div class="overlay">
+        <header>
+            <h1>HOME </h1>
+            <div class="task-status-btn">
+                <a href="{% url 'faults:dashboard' %}" style = "text-decoration: none" class="btn back">← Back to Dashboard</a>
+            </div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="{% url 'admin:index' %}">Admin Panel</a></li>
+                <li><a href="{% url 'faults:fault_list' %}">View Faults API</a></li>
+            </ul>
+        </nav>
+    </div>
+</body>
+</html>

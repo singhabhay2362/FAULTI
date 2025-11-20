@@ -1,0 +1,112 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Animated Gradient Background */
+    background: linear-gradient(270deg, #ff7e5f, #feb47b, #6a11cb, #2575fc);
+    background-size: 800% 800%;
+    animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Dark transparent overlay */
+.overlay {
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Glass box for content */
+.glass-box {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 40px 60px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    text-align: center;
+    color: #fff;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Headings */
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.6);
+    padding-bottom:30px;
+}
+
+.btn {
+    padding: 15px 25px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+.btn.back {background-color: #007bff; color: white; font-weight: bold;}
+
+
+/* Navigation Buttons */
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+}
+
+nav ul li {
+    display: inline-block;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    background: linear-gradient(135deg, #ff9800, #ff5722);
+    padding: 12px 25px;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px rgba(255,255,255,0.3);
+}
+
+nav ul li a:hover {
+    background: linear-gradient(135deg, #ffcc00, #ff6600);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255,255,255,0.6);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .glass-box {
+        padding: 30px;
+        width: 90%;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    nav ul {
+        flex-direction: column;
+        gap: 15px;
+    }
+}

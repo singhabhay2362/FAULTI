@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🚂 Railway Fault Dashboard</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'style1.css' %}">
+</head>
+
+<body>
+<header>
+    <h1>🚂 Railway Fault Dashboard</h1>
+
+    <div class="dashboard-buttons">
+        <a href="{% url 'faults:controls' %}" class="btn-dashboard controls-btn">⚙️ System Controls</a>
+        <a href="{% url 'faults:task_status' %}" class="btn-dashboard status-btn">📋 Task Status</a>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats">
+        <div class="stat-box total">📊 Total: {{ total_count }}</div>
+        <div class="stat-box pending">⏳ Pending: {{ pending_count }}</div>
+        <div class="stat-box assigned">🟡 Assigned: {{ assigned_count }}</div>
+        <div class="stat-box resolved">✅ Resolved: {{ resolved_count }}</div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+        <input type="text" placeholder="🔍 Search Fault ID or Date..." id="searchBox">
+        <select id="statusFilter">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="assigned">Assigned</option>
+            <option value="resolved">Resolved</option>
+        </select>
+    </div>
+</header>
+
+<!-- Fault Cards -->
+<div class="grid" id="faultGrid">
+    {% for fault in faults %}
+        {% if fault.image %}
+            <div class="card" data-status="{{ fault.status|lower }}" data-id="{{ fault.id }}" data-time="{{ fault.timestamp }}">
+                <img src="{{ fault.image.url }}" alt="Fault Image" class="zoomable">
+                <p><strong>Fault ID: {{ fault.id }}</strong></p>
+                <p><strong>Fault Name: {{ fault.display_name }}</strong></p>
+                <p>⏰ {{ fault.timestamp|date:"M d, Y H:i:s" }}</p>
+
+                <div class="task-status-btn">
+                    <button class="yes-btn" data-url="{% url 'faults:confirm_fault' fault.id %}" data-image="{{ fault.image.url }}">✅ YES</button>
+                    <button class="no-btn" data-url="{% url 'faults:confirm_fault' fault.id %}">❌ NO</button>
+                </div>
+            </div>
+        {% endif %}
+    {% empty %}
+        <p class="no-data">No faults detected yet 🚫</p>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+<div class="pagination">
+    {% if faults.has_previous %}
+        <a href="?fault_page={{ faults.previous_page_number }}">⬅ Prev</a>
+    {% endif %}
+    <span class="active">Page {{ faults.number }} of {{ faults.paginator.num_pages }}</span>
+    {% if faults.has_next %}
+        <a href="?fault_page={{ faults.next_page_number }}">Next ➡</a>
+    {% endif %}
+</div>
+
+<!-- ✅ YES Confirmation Modal -->
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Confirm Fault</h3>
+        <img id="modalImg" src="" alt="Fault Image" style="max-width:100%; margin-bottom:15px;">
+        <input type="text" id="faultNameInput" placeholder="Enter Fault Name" required>
+        <button id="submitYesBtn">Submit</button>
+    </div>
+</div>
+
+<!-- 🔍 Image Preview Modal -->
+<div id="imgModal">
+    <span class="close">&times;</span>
+    <img id="fullImage" src="" alt="Full Image">
+</div>
+
+<!-- JS -->
+<script src="{% static 'script.js' %}"></script>
+</body>
+</html>

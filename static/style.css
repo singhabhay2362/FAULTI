@@ -1,0 +1,333 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #FFE4C4;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+    /* Animated Gradient Background */
+    background: linear-gradient(270deg, #ff7e5f, #feb47b, #6a11cb, #2575fc);
+    background-size: 800% 800%;
+    animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Dark transparent overlay */
+.overlay {
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Glass box for content */
+.glass-box {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 40px 60px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    text-align: center;
+    color: #fff;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+
+header h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #222;
+    font-family: verdana;
+    padding-bottom: 30px;
+}
+
+/* ================== STATS ================== */
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.stat-box {
+    padding: 10px 20px;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transition: transform 0.2s;
+}
+.stat-box:hover { transform: scale(1.05); }
+.stat-box.total { background: linear-gradient(45deg, #007bff, #00c6ff); }
+.stat-box.pending { background: linear-gradient(45deg, #ffc107, #ff9800); }
+.stat-box.resolved { background: linear-gradient(45deg, #28a745, #85e085); }
+.stat-box.assigned { background: linear-gradient(45deg, #17a2b8, #00d2ff); }
+
+/* ================== FILTERS ================== */
+.filters {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+.filters input, .filters select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+.filters input:focus, .filters select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0,123,255,0.5);
+}
+
+/* ================== GRID & CARDS ================== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: #E5DEE7;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+.card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+.card img {
+    max-width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+/* ================== STATUS BADGES ================== */
+.status, .sent-status {
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 0.9rem;
+}
+.pending { background: #ffeeba; color: #856404; }
+.sent { background: #c3e6cb; color: #155724; }
+.assigned { background: #bee5eb; color: #0c5460; }
+.resolved { background: #d4edda; color: #155724; }
+.not-sent { background: #f8d7da; color: #721c24; }
+
+/* ================== TASK STATUS BUTTONS ================== */
+.task-status-btn {
+    margin: 15px 0;
+}
+.task-status-btn button {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    font-weight: bold;
+    margin: 0 5px;
+    cursor: pointer;
+}
+.task-status-btn button:hover {
+    background-color: #0056b3;
+}
+
+/* ================== DASHBOARD BUTTONS ================== */
+.dashboard-buttons {
+    text-align: center;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-dashboard {
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1rem;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+/* Specific colors */
+.controls-btn {
+    background-color: #28a745; /* Green for System Controls */
+}
+.controls-btn:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+.status-btn {
+    background-color: #F51083; /* Blue for Task Status */
+}
+.status-btn:hover {
+    background-color: #F8419C;
+    transform: scale(1.05);
+}
+
+/* ================== PAGINATION ================== */
+.pagination {
+    text-align: center;
+    margin-top: 20px;
+}
+.pagination a, .pagination span {
+    margin: 0 5px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    color: #333;
+    transition: 0.3s;
+}
+.pagination a:hover {
+    background: #007bff;
+    color: #fff;
+}
+.pagination .page-info {
+    font-weight: bold;
+    padding: 8px 12px;
+}
+
+/* ================== MODALS ================== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    align-items: center;
+    justify-content: center;
+}
+.modal-content {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 12px;
+    animation: zoomIn 0.3s ease-in-out;
+}
+@keyframes zoomIn {
+    from {transform: scale(0.7); opacity: 0;}
+    to {transform: scale(1); opacity: 1;}
+}
+.close {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close:hover { color: #bbb; }
+
+/* ================== YES/NO BUTTONS ================== */
+.yes-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+.yes-btn:hover { background-color: #218838; }
+
+.no-btn {
+    background-color: #dc3545;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+.no-btn:hover { background-color: #b02a37; }
+
+/* ================== CONFIRMATION PAGE ================== */
+.confirm-container {
+    text-align: center;
+    margin-top: 50px;
+}
+.confirm-img {
+    max-width: 400px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.btn.confirm {
+    background-color: #28a745;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+.btn.cancel {
+    background-color: #6c757d;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+/* ================== IMAGE PREVIEW MODAL (for dashboard image click) ================== */
+#imgModal {
+    display: none;
+    position: fixed;
+    z-index: 99999;
+    padding-top: 50px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.95);
+}
+
+#imgModal img {
+    display: block;
+    margin: auto;
+    max-width: 90%;
+    max-height: 80vh;
+    border-radius: 10px;
+    animation: fadeInZoom 0.4s ease-in-out;
+}
+
+#imgModal .close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+#imgModal .close:hover {
+    color: #bbb;
+}
+
+@keyframes fadeInZoom {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}

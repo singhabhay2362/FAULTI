@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>System Controls</title>
+  <link rel="stylesheet" href="{% static 'style2.css' %}">
+</head>
+<body>
+  <header>
+    <h1>🚦 System Controls</h1>
+    <div class="task-status-btn">
+      <a href="{% url 'faults:dashboard' %}" style = "text-decoration: none" class="btn back">← Back to Dashboard</a>
+    </div>
+  </header>
+
+  <main class="control-buttons">
+    <!-- Capture Video -->
+    <form method="post" action="{% url 'faults:start_capture' %}">
+      {% csrf_token %}
+      <button class="btn capture" type="submit">🎥 Capture Video</button>
+    </form>
+
+    <!-- Detect Faults (with upload) -->
+    <form method="post" action="{% url 'faults:start_detect' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="video_file" required>
+      <button class="btn detect" type="submit">🧠 Detect Faults</button>
+    </form>
+
+    <!-- Start Training -->
+    <form method="post" action="{% url 'faults:start_train' %}">
+      {% csrf_token %}
+      <button class="btn train" type="submit">⚡ Start Training</button>
+    </form>
+  </main>
+
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+</body>
+</html>

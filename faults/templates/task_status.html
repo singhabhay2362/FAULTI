@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Status</title>
+    <link rel="stylesheet" href="{% static 'style1.css' %}">
+</head>
+<body>
+    <header>
+        <h1>📋 Task Monitor</h1>
+        <a href="{% url 'faults:dashboard' %}" class="btn-back">
+           ← Back to Dashboard
+        </a>
+    </header>
+
+    <main>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Task ID</th>
+                    <th>Fault Name</th>
+                    <th>Fault Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td><strong>{{ task.task_id }}</strong></td>
+                    <td><strong>{{ task.display_name }}</strong></td>
+                    <td>
+                        <strong>
+                        {% if task.fault %}
+                            {{ task.fault.timestamp|date:"M d, Y H:i:s" }}
+                        {% else %}
+                            {{ task.timestamp|date:"M d, Y H:i:s" }}
+                        {% endif %}
+                        </strong>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="no-data">No tasks found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            {% if tasks.has_previous %}
+                <a href="?task_page={{ tasks.previous_page_number }}" class="page-link">⬅ Prev</a>
+            {% endif %}
+
+            <span class="page-info">Page {{ tasks.number }} of {{ tasks.paginator.num_pages }}</span>
+
+            {% if tasks.has_next %}
+                <a href="?task_page={{ tasks.next_page_number }}" class="page-link">Next ➡</a>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

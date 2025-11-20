@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background-color: #ffe4c4;
+    /* Animated Gradient Background */
+    background: linear-gradient(270deg, #ff7e5f, #feb47b, #6a11cb, #2575fc);
+    background-size: 800% 800%;
+    animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Dark transparent overlay */
+.overlay {
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Glass box for content */
+.glass-box {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 40px 60px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    text-align: center;
+    color: #fff;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.6);
+    padding-bottom: 40px;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 100px;
+}
+
+.btn {
+    padding: 15px 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+.btn.back {background-color: #007bff; color: white; font-weight: bold;}
+.btn.capture { background-color: #A52A2A; font-weight: bold;}
+.btn.detect { background-color: #EFB223; font-weight: bold;}
+.btn.train { background-color: #BB60BB; color: black; font-weight: bold; }
+
+.btn:hover {
+    opacity: 0.85;
+}
+
+input[type="file"] {
+    background-color: #EFB223;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #ccc;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    margin-top: 5px
+}
+
+.messages {
+    font-family: verdana;
+    font-weight: 600;
+    margin-top: 20px;
+    font-size: 16px;
+    color: black;
+}
