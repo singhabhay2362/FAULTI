@@ -18,7 +18,7 @@ model = YOLO(weights_path)
 
 model.train(
     data=data_yaml_path,
-    epochs=50,
+    epochs=10,
     imgsz=640,
     batch=4,
     workers=0,

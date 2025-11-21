@@ -325,12 +325,12 @@ def confirm_fault(request, pk):
         print(f"🗑️ Deleted {len(copied_ids)} duplicates from dashboard (YES case).")
 
         # Slight delay to sync DB
-        time.sleep(0.5)
+        time.sleep(2)
 
         # Launch LabelImg and update YAML after you close it
         try:
             classes_txt = os.path.join(settings.BASE_DIR, "dataset", "train", "labels", "classes.txt")
-            subprocess.run(["labelImg", dataset_images, classes_txt], shell=True)  # waits until LabelImg closes
+            subprocess.Popen(["labelImg", dataset_images, classes_txt], shell=True)
             update_yaml_after_labeling()  # updates YAML afterward
         except Exception as e:
             print(f"⚠️ LabelImg error: {e}")
@@ -362,7 +362,7 @@ def confirm_fault(request, pk):
         FaultRecord.objects.filter(id__in=deleted_ids).delete()
         print(f"🗑️ Deleted {len(deleted_ids)} duplicates from dashboard (NO case).")
 
-        time.sleep(0.5)
+        time.sleep(2)
 
         return Response({
             "message": f"🚫 {len(deleted_ids)} duplicate images copied with blank labels and deleted from dashboard.",
@@ -370,5 +370,3 @@ def confirm_fault(request, pk):
         })
 
     return Response({"error": "Invalid action"}, status=400)
-
-
