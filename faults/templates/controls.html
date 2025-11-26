@@ -28,11 +28,7 @@
       <button class="btn detect" type="submit">🧠 Detect Faults</button>
     </form>
 
-    <!-- Start Training -->
-    <form method="post" action="{% url 'faults:start_train' %}">
-      {% csrf_token %}
-      <button class="btn train" type="submit">⚡ Start Training</button>
-    </form>
+
   </main>
 
   {% if messages %}

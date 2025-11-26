@@ -1,3 +1,4 @@
+from .train_faults import notify_new_labels_for_training, get_detection_model
 from .detect_faults import run_fault_detection
 import threading
 from django.core.paginator import Paginator
@@ -19,16 +20,20 @@ import hashlib
 import sys
 import time
 
-# ------------------------------
-# Helper: Compute hash (for duplicate detection)
-# ------------------------------
-def compute_file_hash(filepath):
-    """Return SHA256 hash of a file."""
-    hash_func = hashlib.sha256()
-    with open(filepath, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_func.update(chunk)
-    return hash_func.hexdigest()
+# perceptual hashing
+from PIL import Image
+import imagehash
+
+# -----------------------------
+# Perceptual hash function
+# -----------------------------
+def compute_phash(filepath):
+    try:
+        return imagehash.phash(Image.open(filepath))
+    except:
+        return None
+
+
 
 
 # ------------------------------
@@ -110,15 +115,7 @@ def start_detect(request):
     return redirect(reverse("faults:controls"))
 
 
-@require_POST
-def start_train(request):
-    try:
-        script_path = os.path.join(settings.BASE_DIR, "faults", "train_faults.py")
-        subprocess.Popen([sys.executable, script_path])
-        messages.success(request, "Training started ✅")
-    except Exception as e:
-        messages.error(request, f"Failed to start training: {e}")
-    return redirect(reverse("faults:controls"))
+
 
 
 # ------------------------------
@@ -220,62 +217,13 @@ class TaskStatusListView(generics.ListAPIView):
     serializer_class = TaskStatusSerializer
 
 
-# ------------------------------
-# ASSIGN FAULT (assigns a fault to engineer)
-# ------------------------------
-@api_view(["POST"])
-def assign_fault(request, pk):
-    fault = get_object_or_404(FaultRecord, pk=pk)
-    assigned_to = request.data.get("assigned_to", "Engineer")
-
-    fault.status = "assigned"
-    fault.assigned_to = assigned_to if hasattr(fault, "assigned_to") else None
-    fault.save()
-
-    TaskStatus.objects.create(
-        fault=fault,
-        status="assigned",
-        message=f"Fault assigned to {assigned_to}"
-    )
-
-    return Response({
-        "message": f"✅ Fault {fault.id} assigned to {assigned_to}"
-    })
 
 
-# ------------------------------
-# FEEDBACK FAULT (user feedback for a fault)
-# ------------------------------
-@api_view(["POST"])
-def feedback_fault(request, pk):
-    fault = get_object_or_404(FaultRecord, pk=pk)
-    feedback = request.data.get("feedback")
-
-    if not feedback:
-        return Response({"error": "Feedback message is required."}, status=400)
-
-    # Add task status entry
-    TaskStatus.objects.create(
-        fault=fault,
-        status="feedback",
-        message=feedback
-    )
-
-    # Mark fault as resolved
-    fault.status = "resolved"
-    fault.save()
-
-    return Response({
-        "message": f"✅ Feedback submitted successfully for fault ID {pk}",
-        "feedback": feedback
-    })
-
-# ------------------------------
-# ✅ CONFIRM FAULT (YES / NO full logic)
-# ------------------------------
+# -----------------------------
+# CONFIRM FAULT (YES / NO)
+# -----------------------------
 @api_view(["POST"])
 def confirm_fault(request, pk):
-    import time
 
     fault = get_object_or_404(FaultRecord, pk=pk)
     action = request.data.get("action")
@@ -285,88 +233,81 @@ def confirm_fault(request, pk):
     os.makedirs(dataset_images, exist_ok=True)
     os.makedirs(dataset_labels, exist_ok=True)
 
-    # 🧠 Step 1: Compute hash of target image
+    # target image
     target_path = os.path.join(settings.MEDIA_ROOT, str(fault.image))
     if not os.path.exists(target_path):
-        return Response({"error": "Target image not found"}, status=404)
-    target_hash = compute_file_hash(target_path)
+        fault.delete()
+        return Response({"error": "Image missing"}, status=404)
 
-    # 🧠 Step 2: Collect all duplicates (across ALL pages)
+    # compute perceptual hash
+    target_phash = compute_phash(target_path)
+    if target_phash is None:
+        return Response({"error": "Hash error"}, status=500)
+
+    # threshold for similarity (0-64)
+    SIMILARITY_THRESHOLD = 8
+
     duplicate_records = []
-    all_records = FaultRecord.objects.all()
-    print(f"🔍 Scanning {len(all_records)} total records for duplicates...")
 
-    for record in all_records:
-        if record.image:
-            path = os.path.join(settings.MEDIA_ROOT, str(record.image))
-            if os.path.exists(path):
-                try:
-                    record_hash = compute_file_hash(path)
-                    if record_hash == target_hash:
-                        duplicate_records.append(record)
-                except Exception as e:
-                    print(f"⚠️ Error hashing record {record.id}: {e}")
+    # scan all records for visual duplicates
+    for rec in FaultRecord.objects.all():
+        img_path = os.path.join(settings.MEDIA_ROOT, str(rec.image))
 
-    print(f"✅ Found {len(duplicate_records)} duplicate images (including clicked one).")
+        if os.path.exists(img_path):
+            ph = compute_phash(img_path)
+            if ph is not None:
+                diff = target_phash - ph  # Hamming distance
+                if diff <= SIMILARITY_THRESHOLD:
+                    duplicate_records.append(rec)
 
-    # CASE: YES → Copy duplicates → Delete → Launch LabelImg
+    if not duplicate_records:
+        return Response({"error": "No visually similar images found"}, status=404)
+
+    copied_ids = []
+    copied_count = 0
+
+    # copy matching images
+    for rec in duplicate_records:
+        src = os.path.join(settings.MEDIA_ROOT, str(rec.image))
+        dst = os.path.join(dataset_images, os.path.basename(src))
+
+        shutil.copy(src, dst)
+        copied_ids.append(rec.id)
+        copied_count += 1
+
+        if action == "no":
+            txt = os.path.splitext(os.path.basename(src))[0] + ".txt"
+            open(os.path.join(dataset_labels, txt), "w").close()
+
+    # delete all duplicates from DB
+    FaultRecord.objects.filter(id__in=copied_ids).delete()
+
+    # YES → annotation
     if action == "yes":
-        copied_ids = []
-        for rec in duplicate_records:
-            src = os.path.join(settings.MEDIA_ROOT, str(rec.image))
-            if os.path.exists(src):
-                dest = os.path.join(dataset_images, os.path.basename(src))
-                shutil.copy(src, dest)
-                copied_ids.append(rec.id)
-                print(f"📸 Copied (YES): {os.path.basename(src)}")
+        classes_txt = os.path.join(dataset_labels, "classes.txt")
 
-        # Delete from dashboard immediately
-        FaultRecord.objects.filter(id__in=copied_ids).delete()
-        print(f"🗑️ Deleted {len(copied_ids)} duplicates from dashboard (YES case).")
+        # Run labelImg and wait for user to finish labeling
+        process = subprocess.Popen(["labelImg", dataset_images, classes_txt], shell=True)
+        process.wait()  # ⚠️ wait until annotation window is closed
 
-        # Slight delay to sync DB
-        time.sleep(2)
-
-        # Launch LabelImg and update YAML after you close it
-        try:
-            classes_txt = os.path.join(settings.BASE_DIR, "dataset", "train", "labels", "classes.txt")
-            subprocess.Popen(["labelImg", dataset_images, classes_txt], shell=True)
-            update_yaml_after_labeling()  # updates YAML afterward
-        except Exception as e:
-            print(f"⚠️ LabelImg error: {e}")
+        # Now update YAML after labeling is done
+        update_yaml_after_labeling()
+        notify_new_labels_for_training()
 
         return Response({
-            "message": f"✅ {len(copied_ids)} duplicate images copied, deleted, and ready for annotation.",
-            "deleted_ids": copied_ids
+            "message": f"{copied_count} visually similar images sent for annotation.",
+            "count": copied_count,
+            "copied_ids": copied_ids
         })
 
-    #  CASE: NO → Copy duplicates → Create blank labels → Delete
-    elif action == "no":
-        deleted_ids = []
-        for rec in duplicate_records:
-            src = os.path.join(settings.MEDIA_ROOT, str(rec.image))
-            if os.path.exists(src):
-                # Copy image to train/images
-                dest_img = os.path.join(dataset_images, os.path.basename(src))
-                shutil.copy(src, dest_img)
-
-                # Create blank label file in train/labels
-                txt_file = os.path.splitext(os.path.basename(src))[0] + ".txt"
-                txt_path = os.path.join(dataset_labels, txt_file)
-                open(txt_path, "w").close()
-
-                deleted_ids.append(rec.id)
-                print(f"🚫 Copied (NO): {os.path.basename(src)} and blank label created.")
-
-        # ✅ Delete from DB immediately
-        FaultRecord.objects.filter(id__in=deleted_ids).delete()
-        print(f"🗑️ Deleted {len(deleted_ids)} duplicates from dashboard (NO case).")
-
-        time.sleep(2)
+    # NO → auto training
+    if action == "no":
+        notify_new_labels_for_training()
 
         return Response({
-            "message": f"🚫 {len(deleted_ids)} duplicate images copied with blank labels and deleted from dashboard.",
-            "deleted_ids": deleted_ids
+            "message": f"{copied_count} visually similar images auto-labeled as background.",
+            "count": copied_count,
+            "copied_ids": copied_ids
         })
 
     return Response({"error": "Invalid action"}, status=400)

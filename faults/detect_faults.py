@@ -6,7 +6,6 @@ from datetime import datetime
 from ultralytics import YOLO
 from concurrent.futures import ThreadPoolExecutor
 import threading
-
 # ------------------------------
 # Add project root to path
 # ------------------------------
