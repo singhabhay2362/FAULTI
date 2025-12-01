@@ -72,6 +72,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (type === "yes") {
                 alert(`✔️ ${count} images sent for annotation!`);
+
+                // 👇 Redirect handled here
+                if (data.redirect) {
+                    console.log("➡ Redirecting to:", data.redirect);
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 500);
+                    return; // stop further execution
+                }
             } else {
                 alert(`🚫 ${count} images saved with labels!`);
             }

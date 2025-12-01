@@ -1,5 +1,8 @@
 from django.urls import path
 from . import views
+from .views import annotate_view, save_labels, add_new_class
+
+
 
 app_name = "faults"
 
@@ -11,6 +14,11 @@ urlpatterns = [
     path("home/", views.home, name="home"),
     path("controls/", views.controls, name="controls"),
     path("task_status/", views.task_status, name="task_status"),
+
+    path("annotate/", views.annotate_view, name="annotate"),
+    path("save_labels/", views.save_labels, name="save_labels"),
+    path("add-class/", add_new_class, name="add_class"),
+
 
     # ------------------------------
     # ⚙️ TASK TRIGGER ROUTES

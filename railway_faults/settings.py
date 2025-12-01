@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_extensions",
 
     # Third-party
     "rest_framework",
@@ -104,7 +105,7 @@ USE_I18N = True
 USE_TZ = True
 
 # --------------------
-# STATIC & MEDIA
+# STATIC, MEDIA, DATASET
 # --------------------
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
@@ -112,6 +113,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+DATASET_ROOT = os.path.join(BASE_DIR, 'dataset')
+DATASET_URL = '/dataset/'
+
 
 # Video upload directory
 VIDEO_UPLOAD_DIR = BASE_DIR / "faults" / "video_feed"

@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Web LabelImg</title>
+
+    <!-- CSS File -->
+    <link rel="stylesheet" href="{% static 'annotate.css' %}">
+</head>
+<body>
+
+<div id="left-pane">
+    {% if no_images %}
+        <h2 style="color:white;">No images found in train/images</h2>
+    {% else %}
+        <canvas id="canvas"></canvas>
+    {% endif %}
+</div>
+
+<div id="right-pane">
+    {% if not no_images %}
+        <h3>{{ image_name }}</h3>
+        <p>Image {{ idx|add:1 }} / {{ total }}</p>
+
+        <div class="toolbar">
+            <button id="prevBtn">&laquo; Prev</button>
+            <button id="nextBtn">Next &raquo;</button>
+            <button id="saveBtn">Save</button>
+            <button id="deleteBtn">Delete Selected Box</button>
+            <button id="closeBtn" style="background:#e63946; color:white;">Close</button>
+        </div>
+
+        <!-- Class Dropdown -->
+        <label><strong>Select Class</strong></label>
+        <select id="classSelect">
+            {% for c in labels %}
+                <option value="{{ forloop.counter0 }}">{{ c }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Add New Class Section -->
+        <label style="margin-top:10px;"><strong>Add New Class</strong></label>
+        <input type="text" id="newClassInput" placeholder="Type new class name" style="width:100%;">
+        <button id="addClassBtn" style="margin-top:5px;">Add Class</button>
+        <p id="statusMsg" style="color: yellow; font-size: 13px;"></p>
+
+        <h4>Boxes</h4>
+        <div id="boxesList"></div>
+    {% endif %}
+</div>
+
+<!-- Pass backend variables to JS -->
+<script>
+    window.imageUrl = "{{ image_url }}";
+    window.imageName = "{{ image_name }}";
+    window.idx = {{ idx }};
+    window.total = {{ total }};
+    window.saveUrl = "/save_labels/";
+    window.annotateBase = "/annotate/";
+    window.existingBoxes = {{ existing_boxes|safe }};
+</script>
+
+<!-- External JavaScript -->
+<script src="{% static 'annotate.js' %}"></script>
+
+</body>
+</html>

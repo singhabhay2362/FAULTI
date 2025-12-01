@@ -1,11 +1,7 @@
 body{
-    background: #FFE4C4;
+    background: #C4E4FF ;
 
-    /* Animated Gradient Background */
-    background: linear-gradient(270deg, #ff7e5f, #feb47b, #6a11cb, #2575fc);
-    background-size: 800% 800%;
-    animation: gradientShift 12s ease infinite;
-}
+
 
 @keyframes gradientShift {
     0% { background-position: 0% 50%; }
@@ -44,9 +40,16 @@ header {
 header h1 {
     font-size: 2.5rem;
     margin-bottom: 30px;
-    color: #fff;
+    color: #000;
     text-shadow: 0 0 10px rgba(255,255,255,0.6);
+    transition: all 0.3s ease;
 }
+
+header h1:hover {
+    font-size: 2.6rem; /* Increase size on hover */
+    cursor: pointer;
+}
+
 .btn-back {
     display: inline-block;
     text-decoration: none;

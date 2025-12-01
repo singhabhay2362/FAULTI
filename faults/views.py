@@ -11,7 +11,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import FaultRecord, TaskStatus
 from .serializers import FaultRecordSerializer, TaskStatusSerializer
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.http import JsonResponse
 import os
 import yaml
 import subprocess
@@ -19,6 +21,7 @@ import shutil
 import hashlib
 import sys
 import time
+import json
 
 # perceptual hashing
 from PIL import Image
@@ -66,6 +69,129 @@ def update_yaml_after_labeling():
         yaml.safe_dump(yaml_data, f, sort_keys=False)
 
     print("✅ data.yaml updated (relative paths)")
+
+
+# ---------------------- CUSTOM PATH -------------------------
+# Yaha apna dataset folder access ho raha hai
+DATASET_DIR = os.path.join(settings.BASE_DIR, "dataset", "train", "images")
+LABELS_DIR = os.path.join(settings.BASE_DIR, "dataset", "train", "labels")
+
+os.makedirs(LABELS_DIR, exist_ok=True)
+
+
+def get_image_list():
+    return sorted([f for f in os.listdir(DATASET_DIR) if f.lower().endswith((".jpg", ".png", ".jpeg"))])
+
+# -----------------------------
+# Add Class API (NEW)
+# -----------------------------
+@csrf_exempt
+def add_new_class(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+
+    data = json.loads(request.body.decode("utf-8"))
+    new_class = data.get("class_name", "").strip()
+
+    if not new_class:
+        return JsonResponse({"error": "Empty class name"}, status=400)
+
+    classes_file = os.path.join(LABELS_DIR, "classes.txt")
+
+    # Load existing classes
+    with open(classes_file, "r") as f:
+        classes = [line.strip() for line in f.readlines()]
+
+    if new_class in classes:
+        return JsonResponse({"status": "exists", "classes": classes})
+
+    # Append new class
+    with open(classes_file, "a") as f:
+        f.write(new_class + "\n")
+
+    # Update data.yaml
+    update_yaml_after_labeling()
+
+    classes.append(new_class)
+
+    return JsonResponse({"status": "added", "classes": classes})
+
+# -----------------------------
+# Annotate View (Updated)
+# -----------------------------
+def annotate_view(request):
+    images_dir = os.path.join(settings.BASE_DIR, "dataset/train/images")
+    labels_dir = os.path.join(settings.BASE_DIR, "dataset/train/labels")
+
+    images = sorted(os.listdir(images_dir), key=lambda x: os.path.getmtime(os.path.join(images_dir, x)), reverse=True)
+
+    total = len(images)
+    idx = int(request.GET.get("idx", 0))
+
+    if total == 0:
+        return render(request, "annotate.html", {"no_images": True})
+
+    image_name = images[idx]
+    image_url = settings.DATASET_URL + f"train/images/{image_name}"
+
+    # ---- Load existing YOLO labels ----
+    label_file = os.path.splitext(image_name)[0] + ".txt"
+    label_path = os.path.join(labels_dir, label_file)
+
+    existing_boxes = []
+
+    if os.path.exists(label_path):
+        with open(label_path, "r") as f:
+            for line in f.readlines():
+                cls, xc, yc, w, h = map(float, line.split())
+                existing_boxes.append({
+                    "cls": int(cls),
+                    "x_center": xc,
+                    "y_center": yc,
+                    "width": w,
+                    "height": h
+                })
+
+    # ---- Load classes dynamically from file ----
+    classes_path = os.path.join(settings.BASE_DIR, "dataset", "train", "labels", "classes.txt")
+
+    labels_list = []
+    if os.path.exists(classes_path):
+        with open(classes_path, "r") as f:
+            labels_list = [line.strip() for line in f.readlines()]
+
+    context = {
+        "image_name": image_name,
+        "image_url": image_url,
+        "idx": idx,
+        "total": total,
+        "labels": labels_list,
+        "existing_boxes": json.dumps(existing_boxes),
+        "no_images": False
+    }
+
+    return render(request, "annotate.html", context)
+
+
+@csrf_exempt
+def save_labels(request):
+    """Save YOLO style annotations (.txt)"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+
+    data = json.loads(request.body.decode("utf-8"))
+    image_name = data["image_name"]
+    boxes = data["boxes"]
+
+    label_path = os.path.join(LABELS_DIR, os.path.splitext(image_name)[0] + ".txt")
+
+    with open(label_path, "w") as f:
+        for b in boxes:
+            f.write(f"{b['cls']} {b['x_center']} {b['y_center']} {b['width']} {b['height']}\n")
+
+    notify_new_labels_for_training()
+
+    return JsonResponse({"status": "saved"})
 
 
 # ------------------------------
@@ -284,20 +410,21 @@ def confirm_fault(request, pk):
 
     # YES → annotation
     if action == "yes":
-        classes_txt = os.path.join(dataset_labels, "classes.txt")
+        #classes_txt = os.path.join(dataset_labels, "classes.txt")
 
         # Run labelImg and wait for user to finish labeling
-        process = subprocess.Popen(["labelImg", dataset_images, classes_txt], shell=True)
-        process.wait()  # ⚠️ wait until annotation window is closed
+        #process = subprocess.Popen(["labelImg", dataset_images, classes_txt], shell=True)
+        #process.wait()  # ⚠️ wait until annotation window is closed
 
         # Now update YAML after labeling is done
-        update_yaml_after_labeling()
-        notify_new_labels_for_training()
+        #update_yaml_after_labeling()
 
+        #notify_new_labels_for_training()
         return Response({
             "message": f"{copied_count} visually similar images sent for annotation.",
             "count": copied_count,
-            "copied_ids": copied_ids
+            "copied_ids": copied_ids,
+            "redirect": "/annotate/?idx=0"
         })
 
     # NO → auto training
