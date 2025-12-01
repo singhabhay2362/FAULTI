@@ -1,42 +1,183 @@
+/* Base Layout */
 body {
     margin: 0;
+    padding: 0;
     display: flex;
     height: 100vh;
-    font-family: Arial, sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #181818;
 }
+
+/* LEFT IMAGE / CANVAS PANEL */
 #left-pane {
     flex: 3;
-    background: #222;
+    background: #111;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    border-right: 2px solid #2b2b2b;
     position: relative;
 }
+
+#canvas {
+    max-width: 98%;
+    max-height: 98%;
+    background: #000;
+    border: 2px solid #444;
+    cursor: crosshair;
+    border-radius: 6px;
+    transition: 0.2s ease;
+}
+
+/* RIGHT UI PANEL */
 #right-pane {
     flex: 1;
-    background: #333;
+    background: #222;
     color: #fff;
-    padding: 10px;
+    padding: 15px 18px;
     box-sizing: border-box;
+    overflow-y: auto;
 }
-#canvas {
-    border: 1px solid #555;
-    background: #000;
-    cursor: crosshair;
+
+#right-pane h3 {
+    margin: 0;
+    padding: 8px;
+    background: #292929;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
 }
+
+#right-pane p {
+    margin: 6px 0 12px;
+    text-align: center;
+    font-size: 14px;
+    background: #333;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
 .toolbar button {
-    margin: 5px 3px;
-    padding: 5px 10px;
-}
-.box-item {
-    font-size: 12px;
-    margin-bottom: 3px;
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: #333;
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
     cursor: pointer;
+    transition: 0.25s;
 }
-.box-item.selected {
-    background: #555;
+
+.toolbar button:hover {
+    background: #444;
+    transform: scale(1.05);
 }
+
+#closeBtn {
+    background: #d62828;
+}
+
+#closeBtn:hover {
+    background: #bb1f1f;
+}
+
+/* Dropdowns + Inputs */
+label {
+    margin-top: 12px;
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+}
+
 select, input {
     width: 100%;
-    margin-bottom: 5px;
+    padding: 10px;
+    margin-top: 6px;
+    background: #333;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+select:hover, input:hover {
+    border-color: #555;
+}
+
+/* Add Class Button */
+#addClassBtn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    background: #3a86ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#addClassBtn:hover {
+    background: #2b6dd6;
+    transform: scale(1.05);
+}
+
+/* Status message text */
+#statusMsg {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #fbc531;
+}
+
+/* Box listing */
+#boxesList {
+    margin-top: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.box-item {
+    padding: 8px;
+    background: #333;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    border-left: 4px solid #555;
+    transition: 0.2s;
+    font-size: 13px;
+}
+
+.box-item:hover {
+    background: #444;
+}
+
+.box-item.selected {
+    background: #3a86ff;
+    border-left: 4px solid #ffffff;
+    font-weight: bold;
+    color: white;
+}
+
+/* Scrollbar styling */
+*::-webkit-scrollbar {
+    width: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #222;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 10px;
 }

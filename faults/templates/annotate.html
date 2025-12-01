@@ -24,20 +24,22 @@
         <p>Image {{ idx|add:1 }} / {{ total }}</p>
 
         <div class="toolbar">
-            <button id="prevBtn">&laquo; Prev</button>
-            <button id="nextBtn">Next &raquo;</button>
-            <button id="saveBtn">Save</button>
-            <button id="deleteBtn">Delete Selected Box</button>
+            <button id="prevBtn" >&laquo; Prev</button>
+            <button id="nextBtn" >Next &raquo;</button>
+            <button id="saveBtn" >Save</button>
+            <button id="deleteBtn" >Delete Selected Box</button>
             <button id="closeBtn" style="background:#e63946; color:white;">Close</button>
         </div>
 
         <!-- Class Dropdown -->
         <label><strong>Select Class</strong></label>
         <select id="classSelect">
+            <option value="" disabled selected>-- Select Class --</option>
             {% for c in labels %}
-                <option value="{{ forloop.counter0 }}">{{ c }}</option>
+            <option value="{{ forloop.counter0 }}">{{ c }}</option>
             {% endfor %}
         </select>
+
 
         <!-- Add New Class Section -->
         <label style="margin-top:10px;"><strong>Add New Class</strong></label>
