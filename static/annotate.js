@@ -5,27 +5,66 @@ const idx = window.idx;
 const total = window.total;
 const saveUrl = window.saveUrl;
 const annotateBase = window.annotateBase;
-const existingBoxes = window.existingBoxes || []; // existing saved YOLO boxes
+const existingBoxes = window.existingBoxes || [];
 
-// ---- Canvas setup ----
+// ---- Canvas ----
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const img = new Image();
 img.src = imageUrl;
 
-// ---- Data structures ----
-let boxes = [];  // Each box: {x1, y1, x2, y2, cls}
+canvas.style.cursor = "crosshair";
+
+// ---- Data ----
+let boxes = [];
 let drawing = false;
 let startX = 0, startY = 0;
+let currentX = 0, currentY = 0;
 let selectedIndex = -1;
 
+// ---- Mouse Tracking for Crosshair ----
+let mousePos = { x: null, y: null };
 
-// ---- Load existing YOLO boxes and convert to pixels ----
+// ---- Drag + Resize state ----
+let dragging = false;
+let dragOffsetX = 0, dragOffsetY = 0;
+
+let resizing = false;
+let activeHandle = null;
+const HANDLE_SIZE = 8;
+
+// ---- Zoom & Pan ----
+let zoom = 1;
+let offsetX = 0;
+let offsetY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+let panStartOffsetX = 0;
+let panStartOffsetY = 0;
+
+
+// ---- Accurate scaled mouse coordinates ----
+function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const rawX = (e.clientX - rect.left) * scaleX;
+    const rawY = (e.clientY - rect.top) * scaleY;
+
+    return {
+        x: (rawX - offsetX) / zoom,
+        y: (rawY - offsetY) / zoom
+    };
+}
+
+
+// ---- Load YOLO Boxes ----
 function loadExistingBoxes() {
-    if (!existingBoxes || existingBoxes.length === 0) return;
+    if (!existingBoxes.length) return;
 
-    const W = canvas.width;
-    const H = canvas.height;
+    const W = canvas.width, H = canvas.height;
 
     existingBoxes.forEach(b => {
         const x_center = b.x_center * W;
@@ -33,29 +72,23 @@ function loadExistingBoxes() {
         const width = b.width * W;
         const height = b.height * H;
 
-        const x1 = x_center - width / 2;
-        const y1 = y_center - height / 2;
-        const x2 = x_center + width / 2;
-        const y2 = y_center + height / 2;
-
         boxes.push({
-            x1, y1, x2, y2,
+            x1: x_center - width / 2,
+            y1: y_center - height / 2,
+            x2: x_center + width / 2,
+            y2: y_center + height / 2,
             cls: b.cls
         });
     });
 
-    refreshBoxesList();
+    refreshList();
 }
 
 
-// ---- Load image and resize to fit window ----
-img.onload = function () {
-    const maxHeight = window.innerHeight - 40;
-    const scale = Math.min(maxHeight / img.height, 1);
-
-    canvas.width = img.width * scale;
-    canvas.height = img.height * scale;
-
+// ---- Image loaded ----
+img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
     loadExistingBoxes();
     draw();
 };
@@ -63,155 +96,289 @@ img.onload = function () {
 
 // ---- Draw everything ----
 function draw() {
+
+    // Reset transform before clear
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Apply zoom + pan
+    ctx.setTransform(zoom, 0, 0, zoom, offsetX, offsetY);
+
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    ctx.lineWidth = 2;
     boxes.forEach((b, i) => {
         const w = b.x2 - b.x1;
         const h = b.y2 - b.y1;
 
-        ctx.strokeStyle = (i === selectedIndex) ? "red" : "lime";
+        ctx.lineWidth = 2 / zoom;
+        ctx.strokeStyle = i === selectedIndex ? "red" : "#00ff88";
+        ctx.fillStyle = "rgba(0,255,136,0.2)";
+
         ctx.strokeRect(b.x1, b.y1, w, h);
+        ctx.fillRect(b.x1, b.y1, w, h);
+
+        if (i === selectedIndex) drawHandles(b);
     });
+
+    // ---- CROSSHAIR ----
+    if (mousePos.x !== null && mousePos.y !== null) {
+        ctx.save();
+        ctx.lineWidth = 1 / zoom;
+        ctx.strokeStyle = "rgba(255,255,0,0.6)";
+        ctx.setLineDash([12 / zoom, 8 / zoom]);
+
+        // vertical line
+        ctx.beginPath();
+        ctx.moveTo(mousePos.x, 0);
+        ctx.lineTo(mousePos.x, canvas.height);
+        ctx.stroke();
+
+        // horizontal line
+        ctx.beginPath();
+        ctx.moveTo(0, mousePos.y);
+        ctx.lineTo(canvas.width, mousePos.y);
+        ctx.stroke();
+
+        ctx.restore();
+    }
 }
 
 
-// ---- Mouse Events ----
-canvas.addEventListener("mousedown", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    startX = e.clientX - rect.left;
-    startY = e.clientY - rect.top;
-    drawing = true;
-});
+// ---- Handles ----
+function drawHandles(b) {
+    drawHandle(b.x1, b.y1);
+    drawHandle(b.x2, b.y1);
+    drawHandle(b.x1, b.y2);
+    drawHandle(b.x2, b.y2);
+}
 
-canvas.addEventListener("mousemove", (e) => {
-    if (!drawing) return;
+function drawHandle(x, y) {
+    const size = HANDLE_SIZE / zoom;
+    ctx.fillStyle = "#ffeb3b";
+    ctx.fillRect(x - size, y - size, size * 2, size * 2);
+}
 
-    const rect = canvas.getBoundingClientRect();
-    const currentX = e.clientX - rect.left;
-    const currentY = e.clientY - rect.top;
 
-    draw();
-    ctx.strokeStyle = "yellow";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(startX, startY, currentX - startX, currentY - startY);
-});
+// ---- Mouse Move ----
+canvas.addEventListener("mousemove", e => {
+    mousePos = getMousePos(e);
 
-canvas.addEventListener("mouseup", (e) => {
-    if (!drawing) return;
-    drawing = false;
+    // Panning
+    if (isPanning) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const rawX = (e.clientX - rect.left) * scaleX;
+        const rawY = (e.clientY - rect.top) * scaleY;
 
-    const rect = canvas.getBoundingClientRect();
-    const endX = e.clientX - rect.left;
-    const endY = e.clientY - rect.top;
-
-    const cls = parseInt(document.getElementById("classSelect").value);
-
-    const x1 = Math.min(startX, endX);
-    const y1 = Math.min(startY, endY);
-    const x2 = Math.max(startX, endX);
-    const y2 = Math.max(startY, endY);
-
-    if (Math.abs(x2 - x1) < 5 || Math.abs(y2 - y1) < 5) {
+        offsetX = panStartOffsetX + (rawX - panStartX);
+        offsetY = panStartOffsetY + (rawY - panStartY);
         draw();
         return;
     }
 
-    boxes.push({ x1, y1, x2, y2, cls });
-    selectedIndex = boxes.length - 1;
+    // Drag box
+    if (dragging && selectedIndex >= 0) {
+        const b = boxes[selectedIndex];
+        const w = b.x2 - b.x1;
+        const h = b.y2 - b.y1;
+        b.x1 = mousePos.x - dragOffsetX;
+        b.y1 = mousePos.y - dragOffsetY;
+        b.x2 = b.x1 + w;
+        b.y2 = b.y1 + h;
+        draw();
+        return;
+    }
 
-    refreshBoxesList();
+    // Resize box
+    if (resizing && selectedIndex >= 0) {
+        const b = boxes[selectedIndex];
+
+        if (activeHandle.includes('t')) b.y1 = mousePos.y;
+        if (activeHandle.includes('b')) b.y2 = mousePos.y;
+        if (activeHandle.includes('l')) b.x1 = mousePos.x;
+        if (activeHandle.includes('r')) b.x2 = mousePos.x;
+
+        if (b.x1 > b.x2) [b.x1, b.x2] = [b.x2, b.x1];
+        if (b.y1 > b.y2) [b.y1, b.y2] = [b.y2, b.y1];
+
+        draw();
+        return;
+    }
+
+    if (drawing) {
+        currentX = mousePos.x;
+        currentY = mousePos.y;
+        draw();
+        drawTemp();
+        return;
+    }
+
+    draw(); // redraw crosshair while idle
+});
+
+
+// ---- Mouse Down ----
+canvas.addEventListener("mousedown", e => {
+
+    const pos = getMousePos(e);
+
+    // Right click → pan
+    if (e.button === 2) {
+        isPanning = true;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        panStartX = (e.clientX - rect.left) * scaleX;
+        panStartY = (e.clientY - rect.top) * scaleY;
+        panStartOffsetX = offsetX;
+        panStartOffsetY = offsetY;
+        return;
+    }
+
+    // Resize detection
+    if (selectedIndex >= 0) {
+        const h = getHandleUnderMouse(pos.x, pos.y, boxes[selectedIndex]);
+        if (h) {
+            resizing = true;
+            activeHandle = h;
+            return;
+        }
+    }
+
+    // Drag box
+    for (let i = boxes.length - 1; i >= 0; i--) {
+        const b = boxes[i];
+        if (pos.x > b.x1 && pos.x < b.x2 && pos.y > b.y1 && pos.y < b.y2) {
+            selectedIndex = i;
+            dragging = true;
+            dragOffsetX = pos.x - b.x1;
+            dragOffsetY = pos.y - b.y1;
+            refreshList();
+            draw();
+            return;
+        }
+    }
+
+    // Start drawing new box
+    startX = currentX = pos.x;
+    startY = currentY = pos.y;
+    drawing = true;
+});
+
+
+// ---- Mouse Up ----
+canvas.addEventListener("mouseup", () => {
+    if (isPanning) return isPanning = false;
+    if (dragging) return dragging = false;
+    if (resizing) { resizing = false; activeHandle = null; draw(); return; }
+
+    if (!drawing) return;
+    drawing = false;
+
+    const clsVal = document.getElementById("classSelect").value;
+    if (!clsVal) return alert("⚠ Select a class first!");
+
+    const x1 = Math.min(startX, currentX);
+    const y1 = Math.min(startY, currentY);
+    const x2 = Math.max(startX, currentX);
+    const y2 = Math.max(startY, currentY);
+
+    if ((x2 - x1) < 10 || (y2 - y1) < 10) return;
+
+    boxes.push({ x1, y1, x2, y2, cls: parseInt(clsVal) });
+    selectedIndex = boxes.length - 1;
+    refreshList();
     draw();
 });
 
 
-// ---- Box list UI ----
-function refreshBoxesList() {
-    const container = document.getElementById("boxesList");
-    container.innerHTML = "";
+// ---- Disable right-click ----
+canvas.addEventListener("contextmenu", e => e.preventDefault());
 
-    boxes.forEach((box, i) => {
+
+// ---- Zoom Centered at Mouse ----
+canvas.addEventListener("wheel", e => {
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const rawX = (e.clientX - rect.left) * scaleX;
+    const rawY = (e.clientY - rect.top) * scaleY;
+
+    const imgX = (rawX - offsetX) / zoom;
+    const imgY = (rawY - offsetY) / zoom;
+
+    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.2), 15);
+
+    offsetX = rawX - imgX * newZoom;
+    offsetY = rawY - imgY * newZoom;
+    zoom = newZoom;
+
+    draw();
+}, { passive: false });
+
+
+// ---- Box List UI ----
+function refreshList() {
+    const list = document.getElementById("boxesList");
+    list.innerHTML = "";
+
+    boxes.forEach((b, i) => {
         const div = document.createElement("div");
         div.className = "box-item" + (i === selectedIndex ? " selected" : "");
-        div.textContent = `#${i} - Class ${box.cls} (${Math.round(box.x1)}, ${Math.round(box.y1)})`;
-
-        div.onclick = () => {
-            selectedIndex = i;
-            refreshBoxesList();
-            draw();
-        };
-
-        container.appendChild(div);
+        div.textContent = `#${i} Class:${b.cls}`;
+        div.onclick = () => { selectedIndex = i; refreshList(); draw(); };
+        list.appendChild(div);
     });
 }
 
 
-// ---- Save Annotations ----
-document.getElementById("saveBtn").onclick = function () {
-
-    const payloadBoxes = boxes.map(b => {
-        return {
-            cls: b.cls,
-            x_center: +(((b.x1 + b.x2) / 2 / canvas.width).toFixed(6)),
-            y_center: +(((b.y1 + b.y2) / 2 / canvas.height).toFixed(6)),
-            width: +((Math.abs(b.x2 - b.x1) / canvas.width).toFixed(6)),
-            height: +((Math.abs(b.y2 - b.y1) / canvas.height).toFixed(6)),
-        };
-    });
+// ---- Save ----
+document.getElementById("saveBtn").onclick = () => {
+    const p = boxes.map(b => ({
+        cls: b.cls,
+        x_center: +(((b.x1 + b.x2) / 2 / canvas.width).toFixed(6)),
+        y_center: +(((b.y1 + b.y2) / 2 / canvas.height).toFixed(6)),
+        width: +(((b.x2 - b.x1) / canvas.width).toFixed(6)),
+        height: +(((b.y2 - b.y1) / canvas.height).toFixed(6))
+    }));
 
     fetch(saveUrl, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken")
-        },
-        body: JSON.stringify({
-            image_name: imageName,
-            boxes: payloadBoxes
-        })
-    }).then(r => r.json()).then(data => {
-        alert("Saved!");
-    });
+        headers: {"Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken")},
+        body: JSON.stringify({ image_name: imageName, boxes: p })
+    }).then(r => r.json()).then(() => alert("✔ Saved"));
 };
 
 
-// ---- Delete Selected Box ----
-document.getElementById("deleteBtn").onclick = function () {
+// ---- Delete ----
+document.getElementById("deleteBtn").onclick = () => {
     if (selectedIndex < 0) return;
-
     boxes.splice(selectedIndex, 1);
     selectedIndex = -1;
-
-    refreshBoxesList();
+    refreshList();
     draw();
 };
 
 
 // ---- Navigation ----
-document.getElementById("nextBtn").onclick = () => {
-    const next = Math.min(idx + 1, total - 1);
-    window.location = `${annotateBase}?idx=${next}`;
-};
+document.getElementById("nextBtn").onclick = () =>
+    window.location = `${annotateBase}?idx=${Math.min(idx + 1, total - 1)}`;
 
-document.getElementById("prevBtn").onclick = () => {
-    const prev = Math.max(idx - 1, 0);
-    window.location = `${annotateBase}?idx=${prev}`;
-};
+document.getElementById("prevBtn").onclick = () =>
+    window.location = `${annotateBase}?idx=${Math.max(idx - 1, 0)}`;
 
 
-
-// -----------------------------
-// 🚀 Add new class dynamically
-// -----------------------------
+// ---- Class Add ----
 document.getElementById("addClassBtn").onclick = function () {
     const newClass = document.getElementById("newClassInput").value.trim();
     const statusMsg = document.getElementById("statusMsg");
+    const select = document.getElementById("classSelect");
 
-    if (!newClass) {
-        statusMsg.innerText = "⚠ Enter class name";
-        return;
-    }
+    if (!newClass) return statusMsg.innerText = "⚠ Enter class name";
 
     fetch("/add-class/", {
         method: "POST",
@@ -220,54 +387,28 @@ document.getElementById("addClassBtn").onclick = function () {
             "X-CSRFToken": getCookie("csrftoken")
         },
         body: JSON.stringify({ class_name: newClass })
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "exists") {
-                statusMsg.innerText = "⚠ Class already exists!";
-            } else if (data.status === "added") {
-                statusMsg.innerText = "✔ Class added!";
-                updateClassDropdown(data.classes);
-            }
-        });
+    }).then(res => res.json())
+    .then(data => {
+        if (data.status === "exists") return statusMsg.innerText = "⚠ Class already exists!";
+
+        statusMsg.innerText = "✔ Class added!";
+        const option = document.createElement("option");
+        option.value = data.classes.length - 1;
+        option.textContent = newClass;
+        select.appendChild(option);
+        select.value = option.value;
+        document.getElementById("newClassInput").value = "";
+    });
 };
 
 
-// ---- Refresh Dropdown dynamically ----
-function updateClassDropdown(classes) {
-    const select = document.getElementById("classSelect");
-    select.innerHTML = "";
-
-    classes.forEach((c, i) => {
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = c;
-        select.appendChild(option);
-    });
-
-    select.value = classes.length - 1; // auto select newly added class
+// ---- CSRF ----
+function getCookie(name){
+    return document.cookie.split("; ").find(c=>c.startsWith(name+"="))?.split("=")[1]||null;
 }
 
 
-
-// ---- CSRF Token Helper ----
-function getCookie(name) {
-    let value = null;
-    const cookies = document.cookie?.split(";") || [];
-    cookies.forEach(cookie => {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + "=")) {
-            value = decodeURIComponent(cookie.substring(name.length + 1));
-        }
-    });
-    return value;
-}
-
-// -----------------------------
-// CLOSE BUTTON FEATURE
-// -----------------------------
+// ---- Close ----
 document.getElementById("closeBtn").onclick = () => {
-    if (confirm("Are you sure? Unsaved annotations will be lost.")) {
-        window.location.href = "/"; // Change if your URL is different
-    }
+    if(confirm("Exit? Unsaved work will be lost.")) window.location="/";
 };

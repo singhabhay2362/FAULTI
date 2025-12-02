@@ -1,21 +1,31 @@
-/* Base Layout */
+/* GLOBAL THEME */
+:root {
+    --bg-dark: #0e0e0e;
+    --sidebar-bg: rgba(30, 30, 30, 0.6);
+    --accent: #4cc9f0;
+    --accent2: #f72585;
+    --panel-border: rgba(255, 255, 255, 0.1);
+    --text-light: #e6e6e6;
+    --shadow: rgba(0, 0, 0, 0.4);
+}
+
 body {
     margin: 0;
-    padding: 0;
     display: flex;
     height: 100vh;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #181818;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #1a1a1a, #000);
+    color: var(--text-light);
+    overflow: hidden;
 }
 
 /* LEFT IMAGE / CANVAS PANEL */
 #left-pane {
     flex: 3;
-    background: #111;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-right: 2px solid #2b2b2b;
+    border-right: 2px solid var(--panel-border);
     position: relative;
 }
 
@@ -23,161 +33,178 @@ body {
     max-width: 98%;
     max-height: 98%;
     background: #000;
-    border: 2px solid #444;
-    cursor: crosshair;
-    border-radius: 6px;
-    transition: 0.2s ease;
-}
-
-/* RIGHT UI PANEL */
-#right-pane {
-    flex: 1;
-    background: #222;
-    color: #fff;
-    padding: 15px 18px;
-    box-sizing: border-box;
-    overflow-y: auto;
-}
-
-#right-pane h3 {
-    margin: 0;
-    padding: 8px;
-    background: #292929;
-    border-radius: 6px;
-    text-align: center;
-    font-weight: bold;
-}
-
-#right-pane p {
-    margin: 6px 0 12px;
-    text-align: center;
-    font-size: 14px;
-    background: #333;
-    padding: 5px;
-    border-radius: 4px;
-}
-
-/* Toolbar */
-.toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: space-between;
-    margin-bottom: 15px;
-}
-
-.toolbar button {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    background: #333;
-    color: white;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
+    border-radius: 12px;
+    border: 2px solid #333;
+    box-shadow: 0px 0px 25px rgba(0,0,0,0.55);
     transition: 0.25s;
 }
 
+#canvas:hover {
+    border-color: var(--accent);
+    transform: scale(1.01);
+}
+
+/* RIGHT PANEL (GLASS PANEL) */
+#right-pane {
+    flex: 1;
+    backdrop-filter: blur(16px);
+    background: var(--sidebar-bg);
+    padding: 18px 20px;
+    border-left: 2px solid var(--panel-border);
+    box-shadow: -8px 0px 20px var(--shadow);
+    overflow-y: auto;
+}
+
+/* Title + Image Info */
+#right-pane h3 {
+    text-align: center;
+    font-size: 20px;
+    background: rgba(255,255,255,0.08);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+
+#right-pane p {
+    text-align: center;
+    background: rgba(255,255,255,0.05);
+    padding: 6px;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+/* TOOLBAR */
+.toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.toolbar button {
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: 0.22s;
+}
+
 .toolbar button:hover {
-    background: #444;
-    transform: scale(1.05);
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-2px) scale(1.02);
+}
+
+#saveBtn {
+    background: #3abf37;
+}
+
+#saveBtn:hover {
+    background: #2f982d;
 }
 
 #closeBtn {
-    background: #d62828;
+    background: var(--accent2);
 }
 
 #closeBtn:hover {
-    background: #bb1f1f;
+    background: #b02365;
 }
 
-/* Dropdowns + Inputs */
+/* FORMS */
 label {
     margin-top: 12px;
-    display: block;
     font-size: 14px;
-    font-weight: bold;
+    opacity: 0.9;
 }
 
 select, input {
     width: 100%;
     padding: 10px;
     margin-top: 6px;
-    background: #333;
-    color: white;
-    border: 1px solid #444;
-    border-radius: 6px;
-    transition: 0.2s;
+    background: #ffffff;
+    color: #000;
+    border: 1px solid #aaa;
+    border-radius: 7px;
+    outline: none;
+    font-size: 14px;
+}
+
+select option {
+    background: white;
+    color: black;
 }
 
 select:hover, input:hover {
-    border-color: #555;
+    border-color: var(--accent);
 }
 
 /* Add Class Button */
 #addClassBtn {
-    width: 100%;
-    margin-top: 8px;
+    background: var(--accent);
+    margin-top: 10px;
+    border-radius: 7px;
     padding: 10px;
-    background: #3a86ff;
-    color: white;
     border: none;
-    border-radius: 6px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.22s;
+    font-weight: bold;
 }
 
 #addClassBtn:hover {
-    background: #2b6dd6;
+    background: #3cb4d9;
     transform: scale(1.05);
 }
 
-/* Status message text */
 #statusMsg {
-    margin-top: 4px;
     font-size: 12px;
-    color: #fbc531;
+    margin: 4px 0;
+    color: #ffdd57;
 }
 
-/* Box listing */
+/* BOX LISTING */
 #boxesList {
-    margin-top: 10px;
-    max-height: 220px;
+    margin-top: 15px;
+    max-height: 260px;
     overflow-y: auto;
+    padding-right: 6px;
 }
 
 .box-item {
-    padding: 8px;
-    background: #333;
-    margin-bottom: 6px;
-    border-radius: 4px;
-    cursor: pointer;
+    padding: 10px;
+    background: rgba(255,255,255,0.08);
     border-left: 4px solid #555;
-    transition: 0.2s;
-    font-size: 13px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    transition: 0.25s;
+    cursor: pointer;
+    font-size: 14px;
 }
 
 .box-item:hover {
-    background: #444;
+    background: rgba(255,255,255,0.15);
 }
 
 .box-item.selected {
-    background: #3a86ff;
-    border-left: 4px solid #ffffff;
+    background: var(--accent);
+    border-color: white;
     font-weight: bold;
-    color: white;
+    color: #000;
 }
 
-/* Scrollbar styling */
+/* Custom Scrollbar */
 *::-webkit-scrollbar {
-    width: 6px;
-}
-
-*::-webkit-scrollbar-track {
-    background: #222;
+    width: 8px;
 }
 
 *::-webkit-scrollbar-thumb {
-    background: #555;
-    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.35);
 }
